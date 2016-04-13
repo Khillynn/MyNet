@@ -3,24 +3,25 @@ package com.khillynn;
 //Main Hub Rules and such will be made here
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.scoreboard.*;
 
 import java.io.*;
 
@@ -65,6 +66,47 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         if(player.getItemInHand().getType() != Material.DIAMOND){
             player.setItemInHand(new ItemStack(Material.DIAMOND));
         }
+
+        setupScoreBoard(player);
+    }
+
+    private void setupScoreBoard(Player player) {
+        ScoreboardManager sm = Bukkit.getScoreboardManager();
+        Scoreboard onJoin = sm.getNewScoreboard();
+        Objective o = onJoin.registerNewObjective("dash", "dummy");
+
+        o.setDisplaySlot(DisplaySlot.SIDEBAR);
+        //if Hypixel can name his server after himself then so can I =P
+        o.setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Khillynn_Thyme");
+
+        Score spacer = null;
+
+        Score gameTitle = null;
+        Score points = null;
+
+        Score spacer2 = null;
+
+        try{
+            MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
+            int pointsAmt = mdb.getUserPoints(player);
+
+            spacer = o.getScore(ChatColor.AQUA + "");
+            spacer.setScore(4);
+
+            gameTitle = o.getScore(ChatColor.GOLD + "[BoomRoulette]");
+            gameTitle.setScore(3);
+            points = o.getScore(ChatColor.WHITE + "Points: " + ChatColor.GREEN + pointsAmt);
+            points.setScore(2);
+
+            spacer2 = o.getScore(ChatColor.BLACK + "");
+            spacer2.setScore(1);
+
+            player.setScoreboard(onJoin);
+
+            mdb.closeConnection();
+        }catch (Exception ex){
+            System.out.println(ex);
+        }
     }
 
     @EventHandler
@@ -92,6 +134,28 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
     //No one becomes hungry on the sersver
     @EventHandler
     public void noStarve(FoodLevelChangeEvent e){
+        e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void itemMove(InventoryClickEvent e){
+        e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void handChange(PlayerItemHeldEvent e){
+        e.setCancelled(true);
+    }
+
+    //prevents blocks from breaking
+    @EventHandler
+    public void blockDamaged (BlockDamageEvent e){
+        e.setCancelled(true);
+    }
+
+    //prevents weather changes
+    @EventHandler
+    public void weatherChange(WeatherChangeEvent e){
         e.setCancelled(true);
     }
 
