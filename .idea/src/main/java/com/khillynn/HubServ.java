@@ -100,9 +100,11 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
             spacer2 = o.getScore(ChatColor.BLACK + "");
             spacer2.setScore(1);
+            player.setScoreboard(onJoin);
+            String rank = getRankName(player);
 
             for (Player all : Bukkit.getOnlinePlayers()) {
-                showRankName(all, onJoin);
+                showRankName(all, rank);
             }
 
             player.setScoreboard(onJoin);
@@ -113,9 +115,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         }
     }
 
-    public void showRankName(Player player, Scoreboard sb){
-        Team t = sb.registerNewTeam(player.getName());
-
+    public String getRankName(Player player) {
         try {
             MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
             String rank = (String) mdb.getUser(player).get("rank");
@@ -125,21 +125,29 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
                 player.setDisplayName(newName);
                 player.setPlayerListName(newName);
-                t.setPrefix(ChatColor.RED + "[ADMIN] ");
-                t.addPlayer(player);
+                return ChatColor.RED + "[ADMIN] ";
             } else if (rank.equals("Guest")) {
                 String newName = ChatColor.GRAY + player.getName() + ChatColor.RESET;
 
                 player.setDisplayName(newName);
                 player.setPlayerListName(newName);
-                t.setPrefix(ChatColor.GRAY + "");
-                t.addPlayer(player);
+                return ChatColor.GRAY.toString();
             }
-
             mdb.closeConnection();
+            return ChatColor.WHITE.toString();
         }catch (Exception ex){
-            System.out.println(ex);
+            throw new RuntimeException(ex);
         }
+    }
+
+    public void showRankName(Player player, String rank){
+        Scoreboard sb = player.getScoreboard();
+        Team team = sb.getTeam(rank);
+        if(team==null) {
+            team = sb.registerNewTeam(rank);
+            team.setPrefix(rank);
+        }
+        team.addPlayer(player);
     }
 
     @EventHandler
