@@ -29,6 +29,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(this, this);
+        Bukkit.getPluginManager().registerEvents(new PlayerLoginEventListener(), this);
         getLogger().info("HubServ is Enabled! =D");
 
         Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -88,18 +89,21 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
         try{
             MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
-            int pointsAmt = mdb.getUserPoints(player);
-
             spacer = o.getScore(ChatColor.AQUA + "");
             spacer.setScore(4);
 
             gameTitle = o.getScore(ChatColor.GOLD + "[BoomRoulette]");
             gameTitle.setScore(3);
-            points = o.getScore(ChatColor.WHITE + "Points: " + ChatColor.GREEN + pointsAmt);
+
+            points = o.getScore(ChatColor.WHITE + "Points: " + ChatColor.GREEN + mdb.getUserPoints(player));
             points.setScore(2);
 
             spacer2 = o.getScore(ChatColor.BLACK + "");
             spacer2.setScore(1);
+
+            for (Player all : Bukkit.getOnlinePlayers()) {
+                showRankName(all, onJoin);
+            }
 
             player.setScoreboard(onJoin);
 
@@ -107,6 +111,43 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         }catch (Exception ex){
             System.out.println(ex);
         }
+    }
+
+    public void showRankName(Player player, Scoreboard sb){
+        Team t = sb.registerNewTeam(player.getName());
+
+        try {
+            MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
+            String rank = (String) mdb.getUser(player).get("rank");
+
+            if (rank.equals("Admin")) {
+                String newName = ChatColor.RED + "[ADMIN] " + player.getName() + ChatColor.RESET;
+
+                player.setDisplayName(newName);
+                player.setPlayerListName(newName);
+                t.setPrefix(ChatColor.RED + "[ADMIN] ");
+                t.addPlayer(player);
+            } else if (rank.equals("Guest")) {
+                String newName = ChatColor.GRAY + player.getName() + ChatColor.RESET;
+
+                player.setDisplayName(newName);
+                player.setPlayerListName(newName);
+                t.setPrefix(ChatColor.GRAY + "");
+                t.addPlayer(player);
+            }
+
+            mdb.closeConnection();
+        }catch (Exception ex){
+            System.out.println(ex);
+        }
+    }
+
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent e){
+        Player player = e.getPlayer();
+        String message = e.getMessage();
+
+        e.setFormat(player.getDisplayName() + ": " + message);
     }
 
     @EventHandler
@@ -153,7 +194,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         e.setCancelled(true);
     }
 
-    //prevents weather changes
+   //prevents weather changes
     @EventHandler
     public void weatherChange(WeatherChangeEvent e){
         e.setCancelled(true);
