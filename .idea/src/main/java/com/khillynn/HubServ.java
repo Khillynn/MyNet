@@ -33,7 +33,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         getLogger().info("HubServ is Enabled! =D");
 
         Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        Bukkit.getMessenger().registerIncomingPluginChannel(this, "BugeeCord", this);
+        Bukkit.getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
     }
 
 
@@ -83,12 +83,13 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         Score spacer = null;
 
         Score gameTitle = null;
+
         Score points = null;
 
         Score spacer2 = null;
 
         try{
-            MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
+            MongoDB mdb = Core.getMongoDB();
             spacer = o.getScore(ChatColor.AQUA + "");
             spacer.setScore(4);
 
@@ -100,16 +101,13 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
             spacer2 = o.getScore(ChatColor.BLACK + "");
             spacer2.setScore(1);
-            player.setScoreboard(onJoin);
-            String rank = getRankName(player);
 
             for (Player all : Bukkit.getOnlinePlayers()) {
-                showRankName(all, rank);
+                String rank = getRankName(all);
+                showRankName(all, rank, onJoin);
             }
-
             player.setScoreboard(onJoin);
 
-            mdb.closeConnection();
         }catch (Exception ex){
             System.out.println(ex);
         }
@@ -117,7 +115,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
     public String getRankName(Player player) {
         try {
-            MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
+            MongoDB mdb = Core.getMongoDB();
             String rank = (String) mdb.getUser(player).get("rank");
 
             if (rank.equals("Admin")) {
@@ -133,17 +131,15 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
                 player.setPlayerListName(newName);
                 return ChatColor.GRAY.toString();
             }
-            mdb.closeConnection();
             return ChatColor.WHITE.toString();
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
     }
 
-    public void showRankName(Player player, String rank){
-        Scoreboard sb = player.getScoreboard();
+    public void showRankName(Player player, String rank, Scoreboard sb){
         Team team = sb.getTeam(rank);
-        if(team==null) {
+        if(team == null) {
             team = sb.registerNewTeam(rank);
             team.setPrefix(rank);
         }

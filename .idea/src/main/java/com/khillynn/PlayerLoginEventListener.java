@@ -19,6 +19,7 @@ public class PlayerLoginEventListener implements Listener {
 
         //the user was found
         if(result != null){
+            System.out.println(" ++++++++++ The user " + result.get("ign") + " was found");
 
             //if the user's name has changed since the last time they were on the server then update it in the database
             if(result.get("ign") == null || !e.getPlayer().getName().equals(result.get("ign"))) {
