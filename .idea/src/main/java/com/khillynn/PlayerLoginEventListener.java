@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerLoginEvent;
 public class PlayerLoginEventListener implements Listener {
     @EventHandler //omg I can't believe I (and AgentKid) didn't see that I didn't have this EventHandler #BlameAgent
     public void onPlayerLoginEvent(PlayerLoginEvent e){
-        MongoDB mdb = new MongoDB(MongoDBD.username, MongoDBD.password, MongoDBD.database, MongoDBD.host, MongoDBD.port);
+        MongoDB mdb = Core.getMongoDB();
         DBCollection table = mdb.getTable("users");
         DBObject result = mdb.getUser(e.getPlayer());
         BasicDBObject searchQuery = new BasicDBObject();
