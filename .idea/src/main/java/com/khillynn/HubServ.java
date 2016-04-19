@@ -6,12 +6,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.ClickType;
@@ -19,23 +22,51 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.bukkit.scoreboard.*;
+import org.bukkit.util.Vector;
 
 import java.io.*;
 
 public class HubServ extends JavaPlugin implements Listener, PluginMessageListener{
 
+    protected static HubServ plugin;
+    protected static PluginManager pm;
+
     public void onEnable() {
-        Bukkit.getPluginManager().registerEvents(this, this);
-        Bukkit.getPluginManager().registerEvents(new PlayerLoginEventListener(), this);
+        setPlugin(this);
+        setPluginManager(Bukkit.getPluginManager());
+        registerListeners();
+
         getLogger().info("HubServ is Enabled! =D");
 
         Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         Bukkit.getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
     }
 
+    public void setPlugin(HubServ hs){
+        plugin = hs;
+    }
+
+    public static HubServ getPlugin(){
+        return plugin;
+    }
+
+    public void setPluginManager(PluginManager p){
+        pm = p;
+    }
+
+    public static PluginManager getPluginManager(){
+        return pm;
+    }
+
+    void registerListeners(){
+        getPluginManager().registerEvents(this, this);
+        getPluginManager().registerEvents(new PlayerLoginEventListener(), this);
+        getPluginManager().registerEvents(new RankAbilities(), this);
+    }
 
     @EventHandler
     public void clickInsideInventory(InventoryClickEvent e){
@@ -115,8 +146,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
     public String getRankName(Player player) {
         try {
-            MongoDB mdb = Core.getMongoDB();
-            String rank = (String) mdb.getUser(player).get("rank");
+            String rank = RankAbilities.getRank(player);
 
             if (rank.equals("Admin")) {
                 String newName = ChatColor.RED + "[ADMIN] " + player.getName() + ChatColor.RESET;
@@ -187,11 +217,6 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         e.setCancelled(true);
     }
 
-    @EventHandler
-    public void handChange(PlayerItemHeldEvent e){
-        e.setCancelled(true);
-    }
-
     //prevents blocks from breaking
     @EventHandler
     public void blockDamaged (BlockDamageEvent e){
@@ -202,6 +227,20 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
     @EventHandler
     public void weatherChange(WeatherChangeEvent e){
         e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent e){
+        for(Block block : e.blockList()){
+            float x = (float) -2 + (float) (Math.random() * ((2- -2) + 1));
+            float y = (float) -3 + (float) (Math.random() * ((3- -3) + 1));
+            float z = (float) -2 + (float) (Math.random() * ((2- -2) + 1));
+
+            FallingBlock fallingBlock = block.getWorld().spawnFallingBlock(block.getLocation(), block.getType(), block.getData());
+            fallingBlock.setDropItem(false);
+            fallingBlock.setVelocity(new Vector(x, y, z));
+            block.setType(Material.AIR);
+        }
     }
 
     private void tpPlayersToGame(Player player) {
