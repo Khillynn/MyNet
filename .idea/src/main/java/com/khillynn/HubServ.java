@@ -5,7 +5,6 @@ package com.khillynn;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
@@ -66,37 +65,46 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
         getPluginManager().registerEvents(this, this);
         getPluginManager().registerEvents(new PlayerLoginEventListener(), this);
         getPluginManager().registerEvents(new RankAbilities(), this);
+        getPluginManager().registerEvents(new Gadgets(), this);
+    }
+
+    @EventHandler
+    public void clickItem(PlayerInteractEvent e){
+        Player player = e.getPlayer();
+
+        if(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK){
+            ItemStack clickedItem = player.getItemInHand();
+
+            if(clickedItem.getType() == Material.DIAMOND){
+                tpPlayersToGame(player);
+            }
+        }
     }
 
     @EventHandler
     public void clickInsideInventory(InventoryClickEvent e){
         Player player = (Player) e.getWhoClicked();
-        ItemStack clickedItem = e.getCurrentItem();
 
-        if(clickedItem.getType() == Material.DIAMOND && (e.getClick() == ClickType.LEFT || e.getClick() == ClickType.RIGHT)){
-            player.getWorld().playSound(player.getLocation(), Sound.FIREWORK_LAUNCH, 1, 1);
-            tpPlayersToGame(player);
+        if(e.getClick() == ClickType.LEFT || e.getClick() == ClickType.RIGHT){
+            ItemStack clickedItem = e.getCurrentItem();
+
+            if(clickedItem.getType() == Material.DIAMOND) {
+                tpPlayersToGame(player);
+            }
         }
 
         e.setCancelled(true);
     }
 
     @EventHandler
-    public void gameItemClicked(PlayerInteractEvent e){
-        Player player = e.getPlayer();
-
-        if(player.getItemInHand().getType() == Material.DIAMOND && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)){
-            player.getWorld().playSound(player.getLocation(), Sound.FIREWORK_LAUNCH, 1, 1);
-            tpPlayersToGame(player);
-        }
-    }
-
-    @EventHandler
     public void playerJoin(PlayerJoinEvent e){
         Player player = e.getPlayer();
 
-        if(player.getInventory().getItem(0) != null && player.getInventory().getItem(0).getType() != Material.DIAMOND){
+        if(player.getInventory().getItem(0) == null || player.getInventory().getItem(0).getType() != Material.DIAMOND){
             player.getInventory().setItem(0, new ItemStack(Material.DIAMOND));
+        }
+        if(player.getInventory().getItem(1) == null || player.getInventory().getItem(1).getType() != Material.STICK){
+            player.getInventory().setItem(1, new ItemStack(Material.STICK));
         }
 
         setupScoreBoard(player);
