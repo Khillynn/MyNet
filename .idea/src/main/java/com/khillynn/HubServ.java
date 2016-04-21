@@ -82,7 +82,7 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
     }
 
     @EventHandler
-    public void diamondSelectedInHand(PlayerInteractEvent e){
+    public void gameItemClicked(PlayerInteractEvent e){
         Player player = e.getPlayer();
 
         if(player.getItemInHand().getType() == Material.DIAMOND && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)){
@@ -95,8 +95,8 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
     public void playerJoin(PlayerJoinEvent e){
         Player player = e.getPlayer();
 
-        if(player.getItemInHand().getType() != Material.DIAMOND){
-            player.setItemInHand(new ItemStack(Material.DIAMOND));
+        if(player.getInventory().getItem(0) != null && player.getInventory().getItem(0).getType() != Material.DIAMOND){
+            player.getInventory().setItem(0, new ItemStack(Material.DIAMOND));
         }
 
         setupScoreBoard(player);
@@ -191,13 +191,17 @@ public class HubServ extends JavaPlugin implements Listener, PluginMessageListen
 
     @EventHandler
     public void itemDrop (PlayerDropItemEvent e){
-        e.setCancelled(true);
+        if(!RankAbilities.getRank(e.getPlayer()).equals("Admin")) {
+            e.setCancelled(true);
+        }
     }
 
     //prevents players from picking up items
     @EventHandler
     public void itemPickUp (PlayerPickupItemEvent e){
-        e.setCancelled(true);
+        if(!RankAbilities.getRank(e.getPlayer()).equals("Admin")){
+            e.setCancelled(true);
+        }
     }
 
     //No entities on the server can be damaged
