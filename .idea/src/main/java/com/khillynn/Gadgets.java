@@ -14,17 +14,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerUnleashEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 import java.util.HashSet;
 
 public class Gadgets implements Listener{
+    //using a global variable for handling hasGrapple will likely cause problems with multiple users
     int taskId;
     boolean hasGrapple = false;
 
@@ -38,16 +40,30 @@ public class Gadgets implements Listener{
             if(gadget.getType() == Material.STICK){
                 int maxDist = 100;
                 final Block block = player.getTargetBlock((HashSet<Byte>) null, maxDist);
-                if(block.getType() != Material.AIR && hasGrapple == false) {
+                if(block.getType() != Material.AIR && !hasGrapple) {
                     launchGrapple(player, block.getLocation());
                 }
             }
         }
     }
 
+    @EventHandler
+    public void playerQuit(PlayerQuitEvent e){
+        if(hasGrapple){
+            hasGrapple = false;
+        }
+    }
+
+    @EventHandler
+    public void leashBreak(PlayerUnleashEntityEvent e){
+        if(e.getReason() == EntityUnleashEvent.UnleashReason.HOLDER_GONE){
+            e.setCancelled(true);
+        }
+    }
+
     public void launchGrapple(final Player player, final Location loc){
         Bat bat = (Bat) Bukkit.getWorld("hub").spawnEntity(loc, EntityType.BAT);
-        bat.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 1));
+        //bat.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 1));
         WorldServer world =  ((CraftWorld)(bat.getWorld())).getHandle();
         final EntityArrow arrow = new EntityArrow(world);
         BukkitScheduler scheduler = Bukkit.getScheduler();
@@ -65,17 +81,16 @@ public class Gadgets implements Listener{
 
         taskId = scheduler.scheduleSyncRepeatingTask((Plugin) HubServ.getPlugin(), new Runnable() {
             public void run() {
-                if (player.getLocation().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
+                if (player.getLocation().subtract(0, 1, 0).getBlock().getType() != Material.AIR || !player.isOnline()) {
                     try {
-                        Bukkit.getScheduler().cancelTask(taskId);
                         removeGrapple(arrow);
                     }catch (Exception ex){
                         System.out.println(ex);
                     }
+                    Bukkit.getScheduler().cancelTask(taskId);
                 }
             }
         }, 20l, 10L);
-
     }
 
     public void removeGrapple(EntityArrow arrow){
