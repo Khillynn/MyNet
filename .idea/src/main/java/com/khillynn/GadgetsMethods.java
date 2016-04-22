@@ -42,7 +42,7 @@ public class GadgetsMethods {
 
                 taskId = scheduler.scheduleSyncRepeatingTask((Plugin) HubServ.getPlugin(), new Runnable() {
                     public void run() {
-                        if (player.getLocation().subtract(0, 1, 0).getBlock().getType() != Material.AIR || !player.isOnline() || seconds > 5) {
+                        if (loc.subtract(0, 1, 0).getBlock().getType() != Material.AIR || !player.isOnline() || seconds > 5) {
                             try {
                                 removeGrapple(arrow);
                             } catch (Exception ex) {
@@ -56,10 +56,10 @@ public class GadgetsMethods {
             }
             // Else they must be grappling a player
             else{
-                pullTo(entity, player.getLocation());
+                pullTo(entity, loc);
             }
         }
-        // If the entity they are grappling is spawnable (Typically this is used for mobs and prevents the following code to run if the entity is an item
+        // If the entity they are grappling is spawnable (Typically this is used for mobs and prevents the following code to run if the entity is an item)
         else if(entity.getType().isSpawnable()){
             final LivingEntity entity1 = (LivingEntity) entity;
             arrow.getBukkitEntity().setPassenger(entity);
